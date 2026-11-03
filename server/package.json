@@ -1,0 +1,23 @@
+{
+  "name": "saywhatyouknow-server",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "node --watch --env-file-if-exists=.env src/index.js",
+    "start": "node --env-file-if-exists=.env src/index.js",
+    "db:init": "node --env-file-if-exists=.env src/setup.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22.12"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "mysql2": "^3.14.0",
+    "@google/genai": "^2.32.0",
+    "zod": "^4.0.0",
+    "helmet": "^8.1.0",
+    "express-rate-limit": "^8.0.0"
+  }
+}
