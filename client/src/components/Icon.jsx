@@ -1,5 +1,6 @@
 // 아이콘 이름에 해당하는 SVG 경로를 선택해 표시합니다.
 
+// 아이콘 이름별 SVG 도형입니다. 모두 24x24 viewBox 기준입니다.
 const PATHS = {
   card: <><rect x="4" y="3" width="16" height="18" rx="3" /><path d="M8 8h8M8 12h5" /></>,
   search: <><circle cx="11" cy="11" r="6.5" /><path d="M20 20l-4-4" /></>,
@@ -19,6 +20,7 @@ const PATHS = {
   shield: <><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6l8-3z" /><path d="M8.5 12l2.5 2.5 4.5-5" /></>,
 };
 
+// 이름으로 아이콘을 렌더링합니다. 색상은 부모의 글자색(currentColor)을 따릅니다.
 export default function Icon({ name, size = 20, strokeWidth = 1.8, ...rest }) {
   return (
     <svg
@@ -33,6 +35,7 @@ export default function Icon({ name, size = 20, strokeWidth = 1.8, ...rest }) {
       aria-hidden="true"
       {...rest}
     >
+      {/* name에 해당하는 도형을 표시합니다. */}
       {PATHS[name]}
     </svg>
   );

@@ -2,9 +2,11 @@
 
 // 백엔드·DB가 붙기 전까지 쓰는 임시 데이터입니다.
 
+// 단어 선택 화면에서 고를 수 있는 분야와 난이도입니다.
 export const FIELDS = ['과학', '경제', 'IT', '철학', '역사', '사회', '예술', '의학'];
 export const DIFFICULTIES = ['쉬움', '보통', '어려움'];
 
+// 시안용 분야별 예시 단어입니다. 현재 화면에서는 서버의 단어를 사용합니다.
 export const WORDS = {
   과학: [{ word: '엔트로피', en: 'Entropy' }, { word: '양자 얽힘', en: 'Quantum Entanglement' }],
   경제: [{ word: '기회비용', en: 'Opportunity Cost' }, { word: '스태그플레이션', en: 'Stagflation' }],
@@ -16,6 +18,7 @@ export const WORDS = {
   의학: [{ word: '항상성', en: 'Homeostasis' }, { word: '면역 관용', en: 'Immune Tolerance' }],
 };
 
+// 채점 항목과 배점입니다. 합계는 100점이며 서버의 채점 기준과 일치해야 합니다.
 export const RUBRIC = [
   { key: 'accuracy', name: '정확성', max: 40, desc: '설명한 내용이 사실과 개념에 부합하는가' },
   { key: 'concepts', name: '핵심 개념', max: 30, desc: '단어를 이해하는 데 필요한 핵심 개념이 포함되어 있는가' },
@@ -23,6 +26,7 @@ export const RUBRIC = [
   { key: 'logic', name: '논리적 구성', max: 10, desc: '설명이 일관된 흐름으로 연결되는가' },
 ];
 
+// 시안용 피드백 예시입니다. 현재 화면에서는 사용하지 않습니다.
 export const MOCK_FEEDBACK = {
   scores: { accuracy: 34, concepts: 22, clarity: 18, logic: 8 },
   comment: '쉬운 예시가 훌륭해요! 핵심 개념 하나만 더 챙기면 완벽해요.',
@@ -32,6 +36,7 @@ export const MOCK_FEEDBACK = {
   misconception: '‘무질서’는 비유예요. 정확히는 가능한 상태(경우의 수)가 얼마나 많은지와 관련 있어요.',
 };
 
+// 시안용 기록 예시입니다. 현재 화면에서는 사용하지 않습니다.
 export const HISTORY = [
   { word: '블록체인', field: 'IT', difficulty: '어려움', score: 91, date: '10.26' },
   { word: '엔트로피', field: '과학', difficulty: '보통', score: 82, date: '10.24' },
@@ -39,4 +44,5 @@ export const HISTORY = [
   { word: '실존주의', field: '철학', difficulty: '어려움', score: 77, date: '10.19' },
 ];
 
+// 시안용 점수 추이 예시입니다. 현재 화면에서는 사용하지 않습니다.
 export const SCORE_TREND = [58, 64, 61, 70, 68, 75, 72, 79, 77, 84, 82, 91];

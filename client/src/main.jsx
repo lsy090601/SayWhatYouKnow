@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 import './styles/index.css'
 import App from './App.jsx'
 
+// index.html의 #root 요소에 앱을 렌더링합니다. StrictMode는 개발 중 잠재적 문제를 검사합니다.
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <App />

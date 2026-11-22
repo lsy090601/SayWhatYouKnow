@@ -2,6 +2,7 @@
 
 import { RUBRIC } from '../data/mock';
 
+// 채점 항목, 설명, 배점을 표로 보여주는 화면입니다.
 export default function Rubric() {
   return (
     <>
@@ -11,6 +12,7 @@ export default function Rubric() {
       </section>
       <div className="panel">
         <div className="rubric-table">
+          {/* 항목마다 이름, 설명, 배점을 한 줄로 표시합니다. */}
           {RUBRIC.map((r) => (
             <div key={r.key} className="rubric-row">
               <div><b>{r.name}</b><p>{r.desc}</p></div>

@@ -5,7 +5,9 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { useChallenge } from '../ChallengeContext';
 
+// 홈 화면에서 빠르게 고를 수 있는 분야입니다.
 const HOME_FIELDS = ['과학', '경제', 'IT', '철학', '역사', '의학'];
+// 서비스 이용 순서: [아이콘, 제목, 설명]
 const FLOW = [
   ['card', '단어 받기', '분야·난이도 선택'],
   ['search', '10분 검색', 'AI 없이 스스로'],
@@ -14,11 +16,14 @@ const FLOW = [
   ['chart', '기록', '성장 확인'],
 ];
 
+// 서비스를 소개하고 도전을 시작하는 첫 화면입니다.
 export default function Home() {
   const navigate = useNavigate();
   const { update } = useChallenge();
+  // 선택한 분야입니다. null이면 기존 선택을 유지합니다.
   const [field, setField] = useState(null);
 
+  // 선택한 분야를 저장하고 단어 선택 화면으로 이동합니다.
   const start = () => {
     if (field) update({ field, word: null });
     navigate('/challenge');
@@ -26,6 +31,7 @@ export default function Home() {
 
   return (
     <>
+      {/* 소개 문구와 시작 영역 */}
       <section className="hero">
         <span className="eyebrow"><span className="eyebrow-dot" />AI는 정답이 아니라, 내 설명을 듣는 청자</span>
         <h1 className="h-hero">
@@ -37,6 +43,7 @@ export default function Home() {
           어려운 단어 하나를 받아 10분 동안 검색으로 공부하고, <br className="br-d" />
           처음 듣는 친구에게 설명하듯 말해 보세요. AI가 피드백을 드려요.
         </p>
+        {/* 도전 시작 바 */}
         <div className="pill-bar">
           <span className="pill-ic"><Icon name="search" size={20} /></span>
           <span className="pill-ph">{field ? `${field} 분야로 도전해 볼까요?` : '오늘 도전할 분야를 골라 보세요'}</span>
@@ -44,6 +51,7 @@ export default function Home() {
             단어 받기 <Icon name="arrow" size={16} strokeWidth={2.4} />
           </button>
         </div>
+        {/* 분야 선택 칩: 같은 칩을 다시 누르면 선택을 해제합니다. */}
         <div className="chips center" role="group" aria-label="분야 선택">
           {HOME_FIELDS.map((f) => (
             <button key={f} className={`chip${field === f ? ' on' : ''}`} aria-pressed={field === f} onClick={() => setField(f === field ? null : f)}>
@@ -52,6 +60,7 @@ export default function Home() {
           ))}
         </div>
       </section>
+      {/* 학습 진행 순서 */}
       <section className="flow">
         {FLOW.map(([icon, t, d]) => (
           <div key={t} className="flow-item">
