@@ -157,8 +157,8 @@ export default function Explain() {
       )}
       {/* 외부 전송 범위 안내 */}
       <p className="sub">
-        제출하면 설명 텍스트가 AI 채점을 위해 Google(Gemini)로 전송됩니다. 음성
-        원본은 이 서버에 저장하지 않습니다.
+        제출한 설명은 이 컴퓨터에서 실행되는 AI(Ollama)가 채점하며 외부로
+        전송되지 않습니다. 음성 원본은 이 서버에 저장하지 않습니다.
       </p>
       {/* 설명 입력 영역 */}
       <div className="panel editor">
