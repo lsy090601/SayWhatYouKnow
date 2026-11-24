@@ -1,9 +1,11 @@
 -- 사용자, 단어 및 도전 기록을 저장하는 MySQL 테이블의 구조입니다.
 
--- 1. 게스트 사용자 저장
+-- 1. 사용자 저장 (게스트로 시작하고, 회원가입하면 아이디와 비밀번호가 채워짐)
 CREATE TABLE IF NOT EXISTS users (
   id CHAR(36) PRIMARY KEY,      -- 사용자 고유 ID (UUID)
-  token_hash CHAR(64) NOT NULL UNIQUE, -- 게스트 세션 토큰의 해시. 중복 불가
+  token_hash CHAR(64) NOT NULL UNIQUE, -- 세션 토큰의 해시. 중복 불가
+  username VARCHAR(20) NULL UNIQUE,    -- 회원 아이디. 게스트는 NULL
+  password_hash VARCHAR(161) NULL,     -- scrypt 비밀번호 해시 (솔트:해시). 게스트는 NULL
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP -- 사용자 생성 시각
 );
 

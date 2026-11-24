@@ -8,6 +8,11 @@ export const difficulties=['쉬움','보통','어려움'];
 export const wordQuery=z.object({field:z.enum(fields),difficulty:z.enum(difficulties)});
 // 도전 생성 요청 본문. 정의되지 않은 필드는 거부합니다.
 export const newChallenge=z.object({wordId:z.number().int().positive()}).strict();
+// 회원가입과 로그인 요청 본문
+export const credentials=z.object({
+ username:z.string().trim().regex(/^[a-zA-Z0-9_가-힣]{3,20}$/,'아이디는 한글, 영문, 숫자, 밑줄(_)로 3~20자여야 해요.'),
+ password:z.string().min(6,'비밀번호는 6자 이상이어야 해요.').max(72,'비밀번호는 72자까지 입력할 수 있어요.')
+}).strict();
 // http와 https 주소만 허용하는 URL 검사
 export const urlSchema=z.string().trim().max(2048).url().refine(v=>['http:','https:'].includes(new URL(v).protocol),'HTTP(S) 주소만 허용합니다.');
 // 설명 제출 요청 본문

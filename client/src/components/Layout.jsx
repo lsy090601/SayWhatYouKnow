@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import Icon from './Icon';
 import Background3D from './Background3D';
+import { useAuth } from '../AuthContext';
 
 // 데스크톱과 모바일 메뉴에서 함께 사용하는 탐색 항목입니다.
 const NAV = [
@@ -32,6 +33,7 @@ function Logo() {
 export default function Layout() {
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { username } = useAuth();
   // 홈에서는 상단 글로우를 더 크고 밝게 표시합니다.
   const isHome = pathname === '/';
 
@@ -54,7 +56,7 @@ export default function Layout() {
           </nav>
           {/* 사용자 표시, 시작 버튼, 모바일 메뉴 버튼 */}
           <div className="nav-right">
-            <span className="nav-signin">게스트</span>
+            <Link to="/account" className="nav-signin">{username || '로그인 / 가입'}</Link>
             <Link to="/challenge" className="btn btn-primary btn-sm">시작하기</Link>
             <button className="nav-menu" aria-label="메뉴" aria-expanded={menuOpen} onClick={() => setMenuOpen((v) => !v)}>
               <Icon name={menuOpen ? 'close' : 'menu'} size={22} />
@@ -66,7 +68,7 @@ export default function Layout() {
               {NAV.map((n) => (
                 <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'on' : '')}>{n.label}</NavLink>
               ))}
-              <span className="sub">게스트로 학습 중</span>
+              <NavLink to="/account" className={({ isActive }) => (isActive ? 'on' : '')}>{username ? `${username} · 계정` : '로그인 / 회원가입'}</NavLink>
             </nav>
           )}
         </header>

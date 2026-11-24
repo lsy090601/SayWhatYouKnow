@@ -13,6 +13,10 @@ function memoryRepo(){
  const word={id:1,word:'엔트로피',en:'Entropy',field:'과학',difficulty:'보통',reference_text:'고립계의 전체 엔트로피는 감소하지 않는다.'};
  return {
  async health(){},async user(hash){if(!users.has(hash))users.set(hash,{id:randomUUID()});return users.get(hash);},
+ // 회원가입, 로그인, 토큰 교체를 메모리에서 흉내 냅니다. MySQL처럼 아이디의 대소문자는 구분하지 않습니다.
+ async register(userId,username,password_hash){const all=[...users.values()];if(all.some(u=>u.username?.toLowerCase()===username.toLowerCase()))throw Object.assign(new Error('dup'),{code:'ER_DUP_ENTRY'});const u=all.find(u=>u.id===userId&&!u.username);if(!u)return false;Object.assign(u,{username,password_hash});return true;},
+ async account(username){return [...users.values()].find(u=>u.username?.toLowerCase()===username.toLowerCase());},
+ async setToken(userId,hash){const entry=[...users].find(([,u])=>u.id===userId);if(entry){users.delete(entry[0]);users.set(hash,entry[1]);}},
  async words(field,difficulty){return field===word.field&&difficulty===word.difficulty?[{...word,reference_text:undefined}]:[];},
  async word(id){return id===1?word:null;},
  async create(userId,wordId){const id=randomUUID();items.set(id,{...word,id,word_id:wordId,user_id:userId,status:'selected',links:[]});return id;},
@@ -74,6 +78,50 @@ test('API workflow, ownership, validation, failures and idempotency',{timeout:20
  let release;wait=new Promise(r=>{release=r;});const pending=a('/challenges/'+c.body.id+'/submit',payload);
  while(calls<3)await new Promise(r=>setTimeout(r,5));
  assert.equal((await a('/challenges/'+c.body.id+'/submit',payload)).status,409);release();await pending;
+});
+// 회원가입하면 게스트 기록이 유지되고, 다른 브라우저에서 로그인하면 같은 기록을 보며, 로그아웃하면 게스트로 돌아갑니다.
+test('signup keeps guest history, login shares it, logout returns to guest',{timeout:20000},async t=>{
+ const repo=memoryRepo();
+ const app=createApp({repo,rateLimits:false,grade:async()=>feedback});
+ const server=app.listen(0,'127.0.0.1');await new Promise(r=>server.once('listening',r));
+ t.after(()=>{server.closeAllConnections();server.close();});
+ const base='http://127.0.0.1:'+server.address().port;
+ function client(){let cookie='';return async(path,body)=>{
+  const response=await fetch(base+'/api'+path,{method:body===undefined?'GET':'POST',headers:{'Content-Type':'application/json',Cookie:cookie},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(5000)});
+  if(response.headers.get('set-cookie'))cookie=response.headers.get('set-cookie').split(';')[0];
+  return {status:response.status,body:await response.json()};
+ };}
+ const a=client(),b=client(),c=client();
+ // 게스트로 도전 하나를 완료합니다.
+ const ch=await a('/challenges',{wordId:1});await a('/challenges/'+ch.body.id+'/start',{pledged:true});
+ await a('/challenges/'+ch.body.id+'/submit',{explanation:'엔트로피는 고립계의 상태 변화와 관련 있는 물리량입니다.',links:[]});
+ assert.equal((await a('/me')).body.username,null);
+ // 잘못된 입력은 400, 정상 가입은 201이고 기록이 그대로 남습니다.
+ assert.equal((await a('/signup',{username:'ab',password:'secret1'})).status,400);
+ assert.equal((await a('/signup',{username:'tester',password:'123'})).status,400);
+ assert.equal((await a('/signup',{username:'tester',password:'secret1'})).status,201);
+ assert.equal((await a('/me')).body.username,'tester');
+ assert.equal((await a('/history')).body.stats.total,1);
+ // 이미 회원이면 다시 가입할 수 없고, 다른 사람도 같은 아이디(대소문자 무관)를 쓸 수 없습니다.
+ assert.equal((await a('/signup',{username:'other',password:'secret1'})).status,409);
+ assert.equal((await b('/signup',{username:'TESTER',password:'secret1'})).status,409);
+ // 틀린 비밀번호와 없는 아이디는 401입니다.
+ assert.equal((await b('/login',{username:'tester',password:'wrong12'})).status,401);
+ assert.equal((await b('/login',{username:'nobody',password:'secret1'})).status,401);
+ // 다른 브라우저에서 로그인하면 같은 기록이 보입니다.
+ assert.equal((await b('/login',{username:'tester',password:'secret1'})).status,200);
+ assert.equal((await b('/me')).body.username,'tester');
+ assert.equal((await b('/history')).body.stats.total,1);
+ // 회원 한 명당 세션은 하나라서 먼저 로그인한 브라우저는 새 게스트가 됩니다.
+ assert.equal((await a('/me')).body.username,null);
+ // 로그아웃하면 게스트로 돌아가고 기록이 보이지 않습니다. 게스트의 로그아웃은 아무것도 바꾸지 않습니다.
+ assert.equal((await b('/logout',{})).status,200);
+ assert.equal((await b('/me')).body.username,null);
+ assert.equal((await b('/history')).body.stats.total,0);
+ assert.equal((await c('/logout',{})).status,200);
+ // 다시 로그인하면 기록이 돌아옵니다.
+ assert.equal((await c('/login',{username:'tester',password:'secret1'})).status,200);
+ assert.equal((await c('/history')).body.stats.total,1);
 });
 // 범위를 벗어난 점수와 정의되지 않은 필드가 있는 피드백을 거부합니다.
 test('feedback rejects out-of-range scores',()=>{

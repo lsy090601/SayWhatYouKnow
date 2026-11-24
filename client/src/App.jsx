@@ -2,6 +2,7 @@
 
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ChallengeProvider } from './ChallengeContext';
+import { AuthProvider } from './AuthContext';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Pick from './pages/Pick';
@@ -10,10 +11,12 @@ import Explain from './pages/Explain';
 import Feedback from './pages/Feedback';
 import History from './pages/History';
 import Rubric from './pages/Rubric';
+import Account from './pages/Account';
 
 // 앱의 최상위 컴포넌트입니다. Provider가 라우터를 감싸 모든 페이지가 도전 상태를 공유합니다.
 export default function App() {
   return (
+    <AuthProvider>
     <ChallengeProvider>
       <BrowserRouter>
         <Routes>
@@ -28,11 +31,14 @@ export default function App() {
             {/* 기록과 채점 기준 페이지 */}
             <Route path="history" element={<History />} />
             <Route path="rubric" element={<Rubric />} />
+            {/* 회원가입 · 로그인 · 로그아웃 */}
+            <Route path="account" element={<Account />} />
             {/* 정의되지 않은 경로는 홈으로 되돌립니다. */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
       </BrowserRouter>
     </ChallengeProvider>
+    </AuthProvider>
   );
 }

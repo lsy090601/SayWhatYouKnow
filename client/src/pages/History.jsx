@@ -34,7 +34,7 @@ export default function History(){
  // 선택한 도전을 불러와 피드백 화면에서 다시 보여줍니다.
  const open=async id=>{setBusy(true);setError('');try{update(await api('/challenges/'+id));navigate('/challenge/feedback');}catch(e){setError(e.message);}finally{setBusy(false);}};
  const stats=data?.stats;
- return <><section className="page-head left"><h2 className="h-page">나의 기록</h2><p className="sub">이 브라우저에서 완료한 최근 100개의 도전 기록이에요. 쿠키를 삭제하면 게스트 기록에 다시 접근할 수 없어요.</p></section>
+ return <><section className="page-head left"><h2 className="h-page">나의 기록</h2><p className="sub">완료한 최근 100개의 도전 기록이에요. 게스트 기록은 이 브라우저에만 남으니, 잃어버리지 않으려면 회원가입해 주세요.</p></section>
  {/* 오류와 로딩 안내 */}
  {error&&<p className="demo-notice" role="alert">{error}</p>}
  {!data&&!error&&<p className="sub" role="status">기록을 불러오는 중이에요…</p>}

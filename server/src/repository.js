@@ -15,8 +15,14 @@ export function createRepository(){
  // 토큰 해시로 사용자를 찾고 없으면 새로 만듭니다.
  async user(hash){
   await pool.execute('INSERT IGNORE INTO users (id,token_hash) VALUES (?,?)',[randomUUID(),hash]);
-  return one('SELECT id FROM users WHERE token_hash=?',[hash]);
+  return one('SELECT id,username FROM users WHERE token_hash=?',[hash]);
  },
+ // 게스트 사용자에 아이디와 비밀번호를 붙여 회원으로 전환합니다. 기존 기록은 그대로 유지됩니다.
+ async register(userId,username,passwordHash){const [r]=await pool.execute('UPDATE users SET username=?,password_hash=? WHERE id=? AND username IS NULL',[username,passwordHash,userId]);return r.affectedRows===1;},
+ // 로그인할 때 아이디로 회원을 찾습니다.
+ account:username=>one('SELECT id,username,password_hash FROM users WHERE username=?',[username]),
+ // 회원의 세션 토큰을 새 토큰으로 바꿉니다. 이전 토큰은 더 이상 사용할 수 없습니다.
+ setToken:(userId,hash)=>pool.execute('UPDATE users SET token_hash=? WHERE id=?',[hash,userId]),
  // 분야와 난이도에 맞는 단어를 조회합니다. 채점용 참고 내용은 제외합니다.
  async words(field,difficulty){return (await pool.execute('SELECT id,word,en,field,difficulty FROM words WHERE field=? AND difficulty=?',[field,difficulty]))[0];},
  // ID로 단어 하나를 조회합니다.
