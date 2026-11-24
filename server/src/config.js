@@ -5,6 +5,8 @@ export const config = {
  host: process.env.HOST || '127.0.0.1', port: Number(process.env.PORT || 3001),
  production: process.env.NODE_ENV === 'production', origin: process.env.APP_ORIGIN || 'http://localhost:5173',
  // MySQL 연결 풀 설정. 시간대는 UTC를 사용합니다.
- db: {host:process.env.DB_HOST||'127.0.0.1',port:Number(process.env.DB_PORT||3306),user:process.env.DB_USER||'root',password:process.env.DB_PASSWORD||'',database:process.env.DB_NAME||'saywhatyouknow',charset:'utf8mb4',timezone:'Z',connectTimeout:5000,connectionLimit:5}
+ db: {host:process.env.DB_HOST||'127.0.0.1',port:Number(process.env.DB_PORT||3306),user:process.env.DB_USER||'root',password:process.env.DB_PASSWORD||'',database:process.env.DB_NAME||'saywhatyouknow',charset:'utf8mb4',timezone:'Z',connectTimeout:5000,connectionLimit:5,
+  // TiDB Cloud 같은 클라우드 DB는 암호화 연결이 필요하므로 DB_SSL=true로 켭니다.
+  ...(process.env.DB_SSL==='true'?{ssl:{minVersion:'TLSv1.2',rejectUnauthorized:true}}:{})}
 };
 

@@ -63,9 +63,12 @@ async function gradeLocally(request) {
  const model = process.env.OLLAMA_MODEL || 'qwen2.5:3b';
  let response;
  try {
-  response = await fetch('http://127.0.0.1:11434/api/chat', {
+  // OLLAMA_HOST로 원격 Ollama(터널, Ollama Cloud 등)를 지정할 수 있습니다. 없으면 이 컴퓨터의 Ollama를 사용합니다.
+  const host = (process.env.OLLAMA_HOST || 'http://127.0.0.1:11434').replace(/\/+$/, '');
+  response = await fetch(host + '/api/chat', {
    method: 'POST',
-   headers: {'Content-Type': 'application/json'},
+   // 원격 Ollama가 인증을 요구하면 OLLAMA_API_KEY를 Bearer 토큰으로 보냅니다.
+   headers: {'Content-Type': 'application/json', ...(process.env.OLLAMA_API_KEY ? {Authorization: 'Bearer ' + process.env.OLLAMA_API_KEY} : {})},
    // 로컬 모델의 느린 응답을 고려해 180초까지 기다립니다.
    signal: AbortSignal.timeout(180000),
    body: JSON.stringify({
