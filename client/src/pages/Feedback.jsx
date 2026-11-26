@@ -6,7 +6,6 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import Steps from '../components/Steps';
 import { useChallenge } from '../ChallengeContext';
-import { RUBRIC } from '../data/mock';
 
 // 채점 결과와 다음 행동 버튼을 보여주는 화면입니다.
 export default function Feedback() {
@@ -23,8 +22,6 @@ export default function Feedback() {
   const fb = challenge.feedback;
   // 아직 채점 결과가 없으면 설명 화면으로 돌려보냅니다.
   if (!fb) return <Navigate to="/challenge/explain" replace />;
-  // 채점 항목의 점수를 더해 총점을 계산합니다.
-  const total = RUBRIC.reduce((sum, r) => sum + fb.scores[r.key], 0);
 
   return (
     <>
@@ -35,14 +32,14 @@ export default function Feedback() {
         {/* 총점과 항목별 점수 */}
         <div className="panel score-panel glow-card">
           <div className="tags"><span className="tag">{challenge.field}</span><span className="tag">{challenge.word.word}</span></div>
-          <div className="score"><span className="score-n">{total}</span><span className="score-m">/ 100</span></div>
+          <div className="score"><span className="score-n">{fb.total}</span><span className="score-m">/ 100</span></div>
           <p className="score-c">“{fb.comment}”</p>
           {/* 항목별 점수를 만점 대비 막대로 표시합니다. */}
           <div className="crits">
-            {RUBRIC.map((r) => (
+            {fb.scores.map((r) => (
               <div key={r.key} className="crit">
-                <div className="crit-top"><span>{r.name}</span><span className="crit-s"><b>{fb.scores[r.key]}</b> / {r.max}</span></div>
-                <div className="bar"><span className="bar-fill" style={{ width: `${(fb.scores[r.key] / r.max) * 100}%` }} /></div>
+                <div className="crit-top"><span>{r.name}</span><span className="crit-s"><b>{r.score}</b> / {r.max}</span></div>
+                <div className="bar"><span className="bar-fill" style={{ width: `${(r.score / r.max) * 100}%` }} /></div>
               </div>
             ))}
           </div>

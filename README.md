@@ -50,11 +50,26 @@ Say What You Know는 AI를 정답을 대신 주는 도구가 아니라 **내 설
 | Frontend | React, Vite, React Router | 학습 화면과 사용자 상호작용 |
 | 폰트 | Pretendard | 화면 기본 서체 |
 | Backend | Node.js, Express | 학습·기록 API 및 AI 채점 요청 처리 |
-| Database | MySQL | 사용자, 단어장, 도전 기록, 참고 링크 저장 |
+| Database | MySQL | 사용자, 분야·난이도, 단어장, 채점 항목, 도전 기록, 항목별 점수, 참고 링크 저장 |
 | 음성 인식 | Web Speech API | 음성을 텍스트로 변환 |
 | AI 채점 | Ollama (qwen2.5:3b) | 로컬에서 설명 평가 및 피드백 생성 |
 
 AI 채점은 내 컴퓨터에서 실행되는 Ollama 모델을 사용하고(선택적으로 Gemini API로 전환 가능) 사용자 기록은 게스트 세션으로 구분합니다. 계정 로그인과 배포 환경은 추후 확장합니다. 음성 인식 지원 범위는 브라우저에 따라 달라질 수 있으며, 텍스트 입력도 함께 제공합니다.
+
+## 데이터베이스 구조 (3NF)
+
+| 테이블 | 저장 내용 | 관계 |
+| --- | --- | --- |
+| users | 세션 토큰 해시, 회원 아이디, 비밀번호 해시 | |
+| fields | 분야 이름 | |
+| difficulties | 난이도 이름 | |
+| words | 단어, 영어 표기, 채점용 참고 개념 | fields, difficulties 참조 |
+| criteria | 채점 항목 키, 이름, 배점, 평가 내용 | |
+| challenges | 진행 상태, 제출한 설명, AI 글 피드백, 시작·채점·완료 시각 | users, words 참조 |
+| challenge_scores | 도전별 항목 점수 (기본키: 도전 + 항목) | challenges, criteria 참조 |
+| reference_links | 도전에 첨부한 참고 링크 | challenges 참조 |
+
+총점은 따로 저장하지 않고 challenge_scores의 점수를 더해 계산합니다. 분야·난이도 목록과 채점 항목은 화면과 AI 채점이 모두 DB에서 읽어 사용합니다.
 
 ## 개발 계획
 

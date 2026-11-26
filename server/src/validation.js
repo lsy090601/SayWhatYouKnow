@@ -1,11 +1,8 @@
 // 요청과 AI 응답이 허용된 값, 길이, 자료형을 따르는지 검사합니다.
 
 import {z} from 'zod';
-// 허용하는 분야와 난이도
-export const fields=['과학','경제','IT','철학','역사','사회','예술','의학'];
-export const difficulties=['쉬움','보통','어려움'];
-// 단어 목록 조회의 쿼리 값
-export const wordQuery=z.object({field:z.enum(fields),difficulty:z.enum(difficulties)});
+// 단어 목록 조회의 쿼리 값. 실제로 있는 분야·난이도인지는 DB 목록과 비교합니다.
+export const wordQuery=z.object({field:z.string().trim().min(1).max(30),difficulty:z.string().trim().min(1).max(20)});
 // 도전 생성 요청 본문. 정의되지 않은 필드는 거부합니다.
 export const newChallenge=z.object({wordId:z.number().int().positive()}).strict();
 // 회원가입과 로그인 요청 본문
@@ -20,10 +17,11 @@ export const submission=z.object({
  explanation:z.string().trim().min(20,'20자 이상 설명해 주세요.').max(10000,'설명은 10,000자까지 입력할 수 있어요.'),
  links:z.array(urlSchema).max(20).default([])
 }).strict();
-// AI가 반환한 항목별 점수의 범위
-export const scoresSchema=z.object({accuracy:z.number().int().min(0).max(40),concepts:z.number().int().min(0).max(30),clarity:z.number().int().min(0).max(20),logic:z.number().int().min(0).max(10)}).strict();
-// AI가 반환한 피드백 전체의 구조와 길이
-export const feedbackSchema=z.object({scores:scoresSchema,comment:z.string().min(1).max(1000),good:z.string().min(1).max(2000),hint:z.string().min(1).max(2000),hintSub:z.string().max(1000),misconception:z.string().min(1).max(2000)}).strict();
+// AI가 반환한 피드백의 구조와 길이. 항목별 점수 범위는 DB의 채점 항목(criteria)으로 만듭니다.
+export const feedbackSchema=criteria=>z.object({
+ scores:z.object(Object.fromEntries(criteria.map(c=>[c.code,z.number().int().min(0).max(c.max_score)]))).strict(),
+ comment:z.string().min(1).max(1000),good:z.string().min(1).max(2000),hint:z.string().min(1).max(2000),hintSub:z.string().max(1000),misconception:z.string().min(1).max(2000)
+}).strict();
 // HTTP 상태 코드를 함께 담는 오류
 export class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 // 값을 검증해 반환하고, 실패하면 첫 번째 문제를 400 오류로 던집니다.

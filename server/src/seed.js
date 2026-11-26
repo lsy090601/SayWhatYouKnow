@@ -1,4 +1,4 @@
-// 처음 설치할 때 넣을 분야별 단어와 채점용 참고 설명을 정의합니다.
+// 처음 설치할 때 넣을 분야, 난이도, 채점 항목, 단어를 정의합니다.
 
 // 각 행의 형식: [분야, 단어, 영어 표기, 채점용 참고 설명]
 const rows = [
@@ -27,6 +27,16 @@ const rows = [
  ['의학','항상성','Homeostasis','외부 변화에도 내부 환경을 일정 범위로 조절하는 과정이다. 음성 되먹임이 주요 기전이며 고정 상태를 뜻하지 않는다.'],
  ['의학','면역 관용','Immune Tolerance','특정 항원에 면역 반응이 일어나지 않거나 억제되는 상태다. 자기 관용은 자가면역을 방지하고 중추와 말초 기전이 있다.']
 ];
+// 분야와 난이도. 배열 순서가 곧 ID이자 화면 표시 순서입니다.
+export const seedFields=['과학','경제','IT','철학','역사','사회','예술','의학'];
+export const seedDifficulties=['쉬움','보통','어려움'];
+// 채점 항목과 배점. 합계는 100점입니다. 배열 순서가 곧 ID입니다.
+export const seedCriteria=[
+ {code:'accuracy',name:'정확성',max:40,desc:'설명한 내용이 사실과 개념에 부합하는가'},
+ {code:'concepts',name:'핵심 개념',max:30,desc:'단어를 이해하는 데 필요한 핵심 개념이 포함되어 있는가'},
+ {code:'clarity',name:'쉬운 설명',max:20,desc:'처음 듣는 사람도 이해할 수 있는 표현과 예시를 사용하는가'},
+ {code:'logic',name:'논리적 구성',max:10,desc:'설명이 일관된 흐름으로 연결되는가'}
+];
 // 행을 객체로 바꾸고 순서대로 쉬움, 보통, 어려움을 반복해 배정합니다.
-export const seedWords=rows.map(([field,word,en,reference],i)=>({field,word,en,reference,difficulty:['쉬움','보통','어려움'][i%3]}));
+export const seedWords=rows.map(([field,word,en,reference],i)=>({field,word,en,reference,difficulty:seedDifficulties[i%3]}));
 

@@ -5,14 +5,19 @@ import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {createApp} from '../src/app.js';
 import {feedbackSchema,HttpError} from '../src/validation.js';
+// 테스트용 채점 항목 (DB의 criteria 테이블과 같은 구조)
+const criteria=[{id:1,code:'accuracy',name:'정확성',max_score:40,description:'정확성'},{id:2,code:'concepts',name:'핵심 개념',max_score:30,description:'핵심 개념'},{id:3,code:'clarity',name:'쉬운 설명',max_score:20,description:'쉬운 설명'},{id:4,code:'logic',name:'논리적 구성',max_score:10,description:'논리적 구성'}];
 // 가짜 채점기가 반환할 정상 피드백
-const feedback={scores:{accuracy:34,concepts:22,clarity:18,logic:8},comment:'평가',good:'잘한 점',hint:'어떤 관계일까요?',hintSub:'다시 찾아보세요',misconception:'명확한 오류 없음',total:82};
+const feedback={scores:{accuracy:34,concepts:22,clarity:18,logic:8},comment:'평가',good:'잘한 점',hint:'어떤 관계일까요?',hintSub:'다시 찾아보세요',misconception:'명확한 오류 없음'};
 // MySQL 없이 메모리에서 동작하는 테스트용 저장소
 function memoryRepo(){
  const users=new Map(),items=new Map();
  const word={id:1,word:'엔트로피',en:'Entropy',field:'과학',difficulty:'보통',reference_text:'고립계의 전체 엔트로피는 감소하지 않는다.'};
  return {
- async health(){},async user(hash){if(!users.has(hash))users.set(hash,{id:randomUUID()});return users.get(hash);},
+ async health(){},
+ // 분야·난이도 목록과 채점 항목
+ async options(){return {fields:['과학','경제'],difficulties:['쉬움','보통','어려움']};},async criteria(){return criteria;},
+ async user(hash){if(!users.has(hash))users.set(hash,{id:randomUUID()});return users.get(hash);},
  // 회원가입, 로그인, 토큰 교체를 메모리에서 흉내 냅니다. MySQL처럼 아이디의 대소문자는 구분하지 않습니다.
  async register(userId,username,password_hash){const all=[...users.values()];if(all.some(u=>u.username?.toLowerCase()===username.toLowerCase()))throw Object.assign(new Error('dup'),{code:'ER_DUP_ENTRY'});const u=all.find(u=>u.id===userId&&!u.username);if(!u)return false;Object.assign(u,{username,password_hash});return true;},
  async account(username){return [...users.values()].find(u=>u.username?.toLowerCase()===username.toLowerCase());},
@@ -24,8 +29,8 @@ function memoryRepo(){
  async start(id,userId){const c=items.get(id);if(c?.user_id===userId&&c.status==='selected'){c.status='studying';c.started_at=new Date();}},
  async claim(id,userId){const c=items.get(id);if(c?.user_id!==userId||c.status!=='studying')return false;c.status='grading';return true;},
  async release(id,userId){const c=items.get(id);if(c?.user_id===userId)c.status='studying';},
- async complete(id,userId,explanation,links,fb){const c=items.get(id);assert.equal(c.user_id,userId);Object.assign(c,{status:'completed',explanation,links:links.map(url=>({url})),feedback:fb,total:fb.total,completed_at:new Date()});},
- async history(userId){return [...items.values()].filter(c=>c.user_id===userId&&c.status==='completed').map(c=>({id:c.id,word:c.word,score:c.total,completedAt:c.completed_at}));}
+ async complete(id,userId,explanation,links,fb){const c=items.get(id);assert.equal(c.user_id,userId);const scores=criteria.map(cr=>({key:cr.code,name:cr.name,max:cr.max_score,score:fb.scores[cr.code]}));Object.assign(c,{status:'completed',explanation,links:links.map(url=>({url})),feedback:{...fb,scores,total:scores.reduce((a,s)=>a+s.score,0)},completed_at:new Date()});},
+ async history(userId){return [...items.values()].filter(c=>c.user_id===userId&&c.status==='completed').map(c=>({id:c.id,word:c.word,score:c.feedback.total,completedAt:c.completed_at}));}
  };
 }
 // 도전의 전체 흐름과 소유권, 검증, 실패 처리, 중복 제출을 검사합니다.
@@ -125,10 +130,11 @@ test('signup keeps guest history, login shares it, logout returns to guest',{tim
 });
 // 범위를 벗어난 점수와 정의되지 않은 필드가 있는 피드백을 거부합니다.
 test('feedback rejects out-of-range scores',()=>{
- assert.equal(feedbackSchema.safeParse({...feedback,total:undefined}).success,false);
- const {total,...valid}=feedback;
- assert.equal(feedbackSchema.safeParse(valid).success,true);
- assert.equal(feedbackSchema.safeParse({...valid,scores:{...valid.scores,accuracy:41}}).success,false);
+ const schema=feedbackSchema(criteria);
+ assert.equal(schema.safeParse(feedback).success,true);
+ assert.equal(schema.safeParse({...feedback,total:82}).success,false);
+ assert.equal(schema.safeParse({...feedback,scores:{...feedback.scores,accuracy:41}}).success,false);
+ assert.equal(schema.safeParse({...feedback,scores:{...feedback.scores,unknown:1}}).success,false);
 });
 
 

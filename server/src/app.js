@@ -173,9 +173,25 @@ export function createApp({ repo, grade = defaultGrade, rateLimits = true }) {
     }
     res.json({ username: null });
   });
-  // 분야와 난이도에 맞는 단어 목록을 반환합니다.
+  // 단어 선택 화면에서 고를 수 있는 분야와 난이도 목록을 반환합니다.
+  app.get("/api/options", async (_req, res) => res.json(await repo.options()));
+  // 채점 항목과 배점을 반환합니다.
+  app.get("/api/criteria", async (_req, res) =>
+    res.json({
+      criteria: (await repo.criteria()).map((c) => ({
+        key: c.code,
+        name: c.name,
+        max: c.max_score,
+        desc: c.description,
+      })),
+    }),
+  );
+  // 분야와 난이도에 맞는 단어 목록을 반환합니다. DB에 없는 분야·난이도는 거부합니다.
   app.get("/api/words", async (req, res) => {
     const q = parse(wordQuery, req.query);
+    const { fields, difficulties } = await repo.options();
+    if (!fields.includes(q.field) || !difficulties.includes(q.difficulty))
+      throw new HttpError(400, "선택할 수 없는 분야 또는 난이도예요.");
     res.json({ words: await repo.words(q.field, q.difficulty) });
   });
   // 선택한 단어로 새 도전을 만듭니다.
@@ -233,7 +249,13 @@ export function createApp({ repo, grade = defaultGrade, rateLimits = true }) {
           "이미 채점 중이에요. 잠시 후 기록을 확인해 주세요.",
         );
       try {
-        const feedback = await grade({ ...c, explanation: body.explanation });
+        // DB의 채점 항목과 배점을 기준으로 채점합니다.
+        const criteria = await repo.criteria();
+        const feedback = await grade({
+          ...c,
+          explanation: body.explanation,
+          criteria,
+        });
         await repo.complete(
           c.id,
           req.user.id,

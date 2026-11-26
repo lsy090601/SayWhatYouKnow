@@ -2,25 +2,24 @@
 
 import {GoogleGenAI} from '@google/genai';
 import {feedbackSchema,HttpError} from './validation.js';
-// 채점 항목별 최대 점수
-const caps={accuracy:40,concepts:30,clarity:20,logic:10};
-// 모델에 요구할 JSON 구조와 항목별 최대 점수를 정의합니다.
-const schema={
+// DB의 채점 항목(criteria)으로 모델에 요구할 JSON 구조와 항목별 최대 점수를 만듭니다.
+const responseSchema=criteria=>({
  type:'object',additionalProperties:false,
  properties:{
-  scores:{type:'object',additionalProperties:false,properties:Object.fromEntries(Object.entries(caps).map(([k,max])=>[k,{type:'integer',minimum:0,maximum:max}])),required:Object.keys(caps)},
+  scores:{type:'object',additionalProperties:false,properties:Object.fromEntries(criteria.map(c=>[c.code,{type:'integer',minimum:0,maximum:c.max_score}])),required:criteria.map(c=>c.code)},
   ...Object.fromEntries(['comment','good','hint','hintSub','misconception'].map(k=>[k,{type:'string'}]))
  },
  required:['scores','comment','good','hint','hintSub','misconception']
-};
-// 단어, 참고 개념, 사용자의 설명을 AI에 보내 검증된 피드백을 반환합니다.
-export async function grade({word,field,reference_text,explanation}){
+});
+// 단어, 참고 개념, 사용자의 설명을 채점 항목에 따라 AI에 보내 검증된 피드백을 반환합니다.
+export async function grade({word,field,reference_text,explanation,criteria}){
  // AI_PROVIDER가 ollama이면 로컬 모델로 채점합니다.
  const local = process.env.AI_PROVIDER === 'ollama';
  // Gemini를 사용하는데 API 키가 없으면 네트워크 요청 없이 실패합니다.
  if(!local && !process.env.GEMINI_API_KEY)throw new HttpError(503,'서버에 GEMINI_API_KEY를 설정해 주세요.');
 
  try{
+  const schema=responseSchema(criteria);
   const request = {
    model:process.env.GEMINI_MODEL||'gemini-3.8-flash',
    // 평가 대상 자료를 지시문과 분리해 JSON으로 전달합니다.
@@ -44,11 +43,10 @@ export async function grade({word,field,reference_text,explanation}){
   const text=result.text;
   // 응답이 비었거나 정상 종료되지 않았으면 실패로 처리합니다.
   if(!text||result.candidates?.[0]?.finishReason!=='STOP')throw new Error('incomplete');
-  // 모델이 생성한 JSON을 검증한 후 서버에서 합계를 계산합니다.
-  const parsed=feedbackSchema.safeParse(JSON.parse(text));
+  // 모델이 생성한 JSON을 채점 항목 기준으로 검증합니다. 총점은 저장하지 않고 조회할 때 합산합니다.
+  const parsed=feedbackSchema(criteria).safeParse(JSON.parse(text));
   if(!parsed.success)throw new Error('invalid_feedback');
-  const total=Object.values(parsed.data.scores).reduce((a,b)=>a+b,0);
-  return {...parsed.data,total,model:result.modelVersion||process.env.GEMINI_MODEL||'gemini-3.8-flash'};
+  return parsed.data;
  }catch(error){
   // 이미 안내 문구가 있는 오류는 그대로 전달하고 나머지는 502로 통일합니다.
   if(error instanceof HttpError)throw error;
@@ -78,7 +76,7 @@ async function gradeLocally(request) {
      {role: 'user', content: request.contents}
     ],
     // Gemini와 같은 JSON 구조로 응답하게 합니다.
-    format: schema,
+    format: request.config.responseJsonSchema,
     stream: false,
     // 결과가 일정하도록 온도를 0으로 두고 출력과 문맥 길이를 지정합니다.
     options: {temperature: 0, num_predict: 2200, num_ctx: 16384}
@@ -100,7 +98,6 @@ async function gradeLocally(request) {
  // Gemini 응답과 같은 형태로 변환해 이후 검증 코드를 공유합니다.
  return {
   text: result.message?.content,
-  candidates: [{finishReason: result.done && result.done_reason !== 'length' ? 'STOP' : 'INCOMPLETE'}],
-  modelVersion: result.model || model
+  candidates: [{finishReason: result.done && result.done_reason !== 'length' ? 'STOP' : 'INCOMPLETE'}]
  };
 }
